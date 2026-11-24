@@ -21,6 +21,11 @@
 }
 
 /* Minimal, lightly tinted map controls */
+.maplibregl-ctrl-bottom-right {
+  margin-right: 20px !important;
+  margin-bottom: 24px !important;
+}
+
 .maplibregl-ctrl-group {
   border-radius: 12px !important;
   overflow: hidden;

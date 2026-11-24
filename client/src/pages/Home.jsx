@@ -128,6 +128,85 @@ export default function Home() {
     }
   }, [userLocation]);
 
+  // Ensure active driving route corridor is rendered on the map canvas
+  useEffect(() => {
+    const map = mapRef.current?.getMap ? mapRef.current.getMap() : mapRef.current;
+    if (!map) return;
+
+    const sourceId = 'source-active-route';
+    const casingLayerId = 'layer-active-route-casing';
+    const innerLayerId = 'layer-active-route-inner';
+
+    const renderRoute = () => {
+      try {
+        if (!map.isStyleLoaded()) return;
+
+        if (isDirectionsOpen && selectedRoute?.geometry) {
+          const geojson = {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: selectedRoute.geometry,
+              },
+            ],
+          };
+
+          const existingSource = map.getSource(sourceId);
+          if (existingSource) {
+            existingSource.setData(geojson);
+          } else {
+            map.addSource(sourceId, {
+              type: 'geojson',
+              data: geojson,
+            });
+          }
+
+          if (!map.getLayer(casingLayerId)) {
+            map.addLayer({
+              id: casingLayerId,
+              type: 'line',
+              source: sourceId,
+              layout: { 'line-cap': 'round', 'line-join': 'round' },
+              paint: {
+                'line-color': '#1e3a8a',
+                'line-width': 9,
+                'line-opacity': 0.9,
+              },
+            });
+          }
+
+          if (!map.getLayer(innerLayerId)) {
+            map.addLayer({
+              id: innerLayerId,
+              type: 'line',
+              source: sourceId,
+              layout: { 'line-cap': 'round', 'line-join': 'round' },
+              paint: {
+                'line-color': '#2563eb',
+                'line-width': 5,
+                'line-opacity': 1,
+              },
+            });
+          }
+        } else {
+          if (map.getLayer(innerLayerId)) map.removeLayer(innerLayerId);
+          if (map.getLayer(casingLayerId)) map.removeLayer(casingLayerId);
+          if (map.getSource(sourceId)) map.removeSource(sourceId);
+        }
+      } catch (err) {
+        console.warn('MapLibre route rendering update:', err.message);
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      renderRoute();
+    } else {
+      map.once('load', renderRoute);
+    }
+  }, [isDirectionsOpen, selectedRoute]);
+
   // Hook directly into the existing Geolocate button in DOM for instant 0ms responsiveness
   useEffect(() => {
     const attachGeolocateListener = () => {
@@ -372,8 +451,8 @@ export default function Home() {
               </motion.button>
             </div>
 
-            {/* Right: 3. Sign In & 4. My Reports directly below it (Unified styling) */}
-            <div className="flex flex-col items-end gap-2.5 pointer-events-auto mr-16 sm:mr-20">
+            {/* Right: 1. Sign In / Profile, 2. My Reports, 3. Relocate directly below (Unified styling) */}
+            <div className="flex flex-col items-end gap-2.5 pointer-events-auto">
               {/* Sign In Button (no icon, only text, unified styling) */}
               <motion.button
                 initial={{ opacity: 0, y: -20 }}
@@ -407,6 +486,38 @@ export default function Home() {
                   {isAuthenticated ? myReports.length : 0}
                 </span>
               </motion.button>
+
+              {/* Relocate Button (directly below My Reports, unified styling) */}
+              <motion.button
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        const loc = { longitude: pos.coords.longitude, latitude: pos.coords.latitude };
+                        setUserLocation(loc);
+                        handleRecenter(loc);
+                      },
+                      (err) => {
+                        console.warn('Geolocation error:', err.message);
+                        if (userLocation) handleRecenter(userLocation);
+                      },
+                      { enableHighAccuracy: true, timeout: 8000 }
+                    );
+                  } else if (userLocation) {
+                    handleRecenter(userLocation);
+                  }
+                }}
+                className="h-11 px-4 rounded-xl bg-white/90 hover:bg-white backdrop-blur-md text-slate-800 hover:text-slate-950 border border-slate-300/90 hover:border-slate-400 shadow-[0_2px_8px_rgba(15,23,42,0.06)] flex items-center gap-2 text-sm font-semibold transition-all cursor-pointer"
+                title="Re-center map to my location"
+              >
+                <Navigation size={16} className="text-blue-600" />
+                <span>Relocate</span>
+              </motion.button>
             </div>
           </div>
         )}
@@ -428,25 +539,8 @@ export default function Home() {
           minZoom={3}
           maxZoom={18}
         >
-          <NavigationControl position="top-right" showCompass={false} />
-          <GeolocateControl
-            position="top-right"
-            positionOptions={{ enableHighAccuracy: true, timeout: 8000 }}
-            trackUserLocation={false}
-            showUserLocation={false}
-            onGeolocate={(e) => {
-              const coords = e.coords;
-              const loc = { longitude: coords.longitude, latitude: coords.latitude };
-              setUserLocation(loc);
-              handleRecenter(loc);
-            }}
-            onError={(err) => {
-              console.warn('Geolocation error:', err.message);
-              if (userLocation) {
-                handleRecenter(userLocation);
-              }
-            }}
-          />
+          {/* Zoom In (+) & Zoom Out (-) controls placed in the bottom right */}
+          <NavigationControl position="bottom-right" showCompass={false} />
 
           {/* User location marker */}
           {userLocation && (
@@ -485,38 +579,7 @@ export default function Home() {
             </Marker>
           )}
 
-          {/* Active Route Rendering */}
-          {isDirectionsOpen && selectedRoute && (
-            <Source
-              id="source-active-route"
-              type="geojson"
-              data={{
-                type: 'Feature',
-                geometry: selectedRoute.geometry,
-              }}
-            >
-              <Layer
-                id="layer-active-route-casing"
-                type="line"
-                layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-                paint={{
-                  'line-color': '#1e3a8a',
-                  'line-width': 9,
-                  'line-opacity': 0.9,
-                }}
-              />
-              <Layer
-                id="layer-active-route-inner"
-                type="line"
-                layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-                paint={{
-                  'line-color': '#2563eb',
-                  'line-width': 5,
-                  'line-opacity': 1,
-                }}
-              />
-            </Source>
-          )}
+          {/* Active route is rendered directly on MapLibre canvas via renderRoute effect */}
 
           {/* Reported issue markers */}
           {issues.map((issue) => {

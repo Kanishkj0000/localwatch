@@ -192,7 +192,7 @@ export default function DirectionsPanel({ userLocation, onFocusIssue, onFitRoute
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -30 }}
         transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-        className="fixed top-[130px] left-3 z-[99990] w-[calc(100vw-1.5rem)] sm:w-[410px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col max-h-[calc(100vh-1.5rem)] overflow-hidden font-sans pointer-events-auto"
+        className="fixed top-[148px] left-5 z-[99990] w-[calc(100vw-2.5rem)] sm:w-[420px] bg-white rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col max-h-[calc(100vh-11rem)] overflow-hidden font-sans pointer-events-auto"
       >
         {/* Panel Header */}
         <div className="p-4 bg-gray-950 text-white relative">
