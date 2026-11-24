@@ -304,7 +304,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="w-full p-3 md:p-5 flex items-start justify-between gap-3 pointer-events-none">
-            {/* Left: Project Title (Noticeably Larger Identity) & Search Button directly below */}
+            {/* Left: Project Brand Card & Search Button directly below */}
             <div className="flex flex-col items-start gap-2.5">
               <motion.div
                 initial={{ opacity: 0 }}
