@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_USER: localwatch
+      POSTGRES_PASSWORD: localwatch_password
+      POSTGRES_DB: localwatch
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgres://localwatch:localwatch_password@db:5432/localwatch
+      - JWT_SECRET=super_secret_jwt_key
+    depends_on:
+      - db
+    # For dev, we might run this locally instead of docker, but leaving here for full stack
+    command: npm run dev
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://localwatch:localwatch_password@db:5432/localwatch
+    depends_on:
+      - db
+    volumes:
+      - ./ai-service:/app
+
+volumes:
+  pgdata:

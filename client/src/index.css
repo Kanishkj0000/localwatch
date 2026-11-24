@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f8f9fa;
+  --color-ink: #111827;
+  --color-accent: #ef4444;
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Space Grotesk', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    margin: 0;
+    padding: 0;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold tracking-tight;
+  }
+}
+
+/* Minimal, lightly tinted map controls */
+.maplibregl-ctrl-group {
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(8px);
+}
+
+.maplibregl-ctrl-group button {
+  width: 38px !important;
+  height: 38px !important;
+  background: transparent !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: rgba(241, 245, 249, 0.95) !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid rgba(226, 232, 240, 0.8) !important;
+}
+
+.maplibregl-ctrl-icon {
+  filter: brightness(0.35) !important;
+  transform: scale(1.0) !important;
+}
+
+.maplibregl-popup-content {
+  border-radius: 18px !important;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  padding: 14px 16px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.maplibregl-popup-close-button {
+  display: none !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: white !important;
+}
+
+/* Pulsing animation for user location */
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0.2; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
