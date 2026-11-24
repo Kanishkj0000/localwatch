@@ -278,23 +278,21 @@ export default function Home() {
       <div className="absolute inset-0 z-[99999] pointer-events-none">
         {showIntro ? (
           <div className="w-full h-full flex flex-col items-center justify-center">
-            <motion.div
-              layoutId="logo-header"
-              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-transparent flex items-center gap-4"
-            >
-              <img
+            <div className="bg-transparent flex items-center gap-3.5">
+              <motion.img
+                layoutId="logo-img"
                 src="/localwatch-icon.png"
                 alt="LocalWatch Logo"
-                width={80}
-                height={80}
-                className="w-20 h-20 md:w-24 md:h-24 rounded-3xl shadow-2xl"
+                className="w-16 h-16 md:w-20 md:h-20 rounded-2xl shadow-xl"
               />
-              <h1 className="text-6xl md:text-8xl font-heading font-black tracking-tighter m-0 flex items-center">
+              <motion.h1
+                layoutId="logo-text"
+                className="text-5xl md:text-7xl font-heading font-black tracking-tight m-0 flex items-center"
+              >
                 <span className="text-slate-950">Local</span>
                 <span className="text-[#00b87c]">Watch</span>
-              </h1>
-            </motion.div>
+              </motion.h1>
+            </div>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -309,29 +307,34 @@ export default function Home() {
           <div className="w-full p-3 md:p-5 flex items-start justify-between gap-3 pointer-events-none">
             {/* Left: Project Title (Noticeably Larger Identity) & Search Button directly below */}
             <div className="flex flex-col items-start gap-2.5">
-              <motion.div
-                layoutId="logo-header"
-                transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              <div
                 className="px-4 py-2 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_16px_rgba(15,23,42,0.08)] pointer-events-auto flex items-center gap-3 cursor-pointer hover:bg-white transition-all group"
                 onClick={() => setViewState((prev) => ({ ...prev, zoom: 14 }))}
               >
-                <img
+                <motion.img
+                  layoutId="logo-img"
                   src="/localwatch-icon.png"
                   alt="LocalWatch Logo"
-                  width={36}
-                  height={36}
                   className="w-9 h-9 rounded-xl shadow-sm object-cover group-hover:scale-105 transition-transform"
                 />
                 <div className="flex flex-col">
-                  <h1 className="text-xl md:text-2xl font-heading font-black tracking-tight m-0 leading-none flex items-center">
+                  <motion.h1
+                    layoutId="logo-text"
+                    className="text-xl md:text-2xl font-heading font-black tracking-tight m-0 leading-none flex items-center"
+                  >
                     <span className="text-slate-950">Local</span>
                     <span className="text-[#00b87c]">Watch</span>
-                  </h1>
-                  <span className="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5">
+                  </motion.h1>
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                    className="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5"
+                  >
                     Know what's wrong nearby.
-                  </span>
+                  </motion.span>
                 </div>
-              </motion.div>
+              </div>
 
               {/* 1. Search Button (Unified styling) */}
               <motion.button
