@@ -33,6 +33,7 @@ export default function Home() {
   const [isPinning, setIsPinning] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [viewportBounds, setViewportBoundsLocal] = useState(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   const mapRef = useRef(null);
   const popupRef = useRef(null);
@@ -128,7 +129,7 @@ export default function Home() {
     }
   }, [userLocation]);
 
-  // Ensure active driving route corridor is rendered on the map canvas
+  // Synchronize active driving route directly onto MapLibre canvas
   useEffect(() => {
     const map = mapRef.current?.getMap ? mapRef.current.getMap() : mapRef.current;
     if (!map) return;
@@ -137,9 +138,9 @@ export default function Home() {
     const casingLayerId = 'layer-active-route-casing';
     const innerLayerId = 'layer-active-route-inner';
 
-    const renderRoute = () => {
+    const syncRoute = () => {
       try {
-        if (!map.isStyleLoaded()) return;
+        if (!map.getStyle && !map.style) return;
 
         if (isDirectionsOpen && selectedRoute?.geometry) {
           const geojson = {
@@ -154,9 +155,14 @@ export default function Home() {
           };
 
           const existingSource = map.getSource(sourceId);
-          if (existingSource) {
+          if (existingSource && typeof existingSource.setData === 'function') {
             existingSource.setData(geojson);
           } else {
+            if (map.getSource(sourceId)) {
+              if (map.getLayer(innerLayerId)) map.removeLayer(innerLayerId);
+              if (map.getLayer(casingLayerId)) map.removeLayer(casingLayerId);
+              map.removeSource(sourceId);
+            }
             map.addSource(sourceId, {
               type: 'geojson',
               data: geojson,
@@ -168,7 +174,10 @@ export default function Home() {
               id: casingLayerId,
               type: 'line',
               source: sourceId,
-              layout: { 'line-cap': 'round', 'line-join': 'round' },
+              layout: {
+                'line-cap': 'round',
+                'line-join': 'round',
+              },
               paint: {
                 'line-color': '#1e3a8a',
                 'line-width': 9,
@@ -182,7 +191,10 @@ export default function Home() {
               id: innerLayerId,
               type: 'line',
               source: sourceId,
-              layout: { 'line-cap': 'round', 'line-join': 'round' },
+              layout: {
+                'line-cap': 'round',
+                'line-join': 'round',
+              },
               paint: {
                 'line-color': '#2563eb',
                 'line-width': 5,
@@ -196,16 +208,20 @@ export default function Home() {
           if (map.getSource(sourceId)) map.removeSource(sourceId);
         }
       } catch (err) {
-        console.warn('MapLibre route rendering update:', err.message);
+        console.warn('MapLibre syncRoute error:', err);
       }
     };
 
-    if (map.isStyleLoaded()) {
-      renderRoute();
-    } else {
-      map.once('load', renderRoute);
+    syncRoute();
+    if (typeof map.on === 'function') {
+      map.on('styledata', syncRoute);
+      return () => {
+        if (typeof map.off === 'function') {
+          map.off('styledata', syncRoute);
+        }
+      };
     }
-  }, [isDirectionsOpen, selectedRoute]);
+  }, [isMapLoaded, isDirectionsOpen, selectedRoute]);
 
   // Hook directly into the existing Geolocate button in DOM for instant 0ms responsiveness
   useEffect(() => {
@@ -536,6 +552,7 @@ export default function Home() {
           onClick={() => setSelectedIssue((prev) => (prev ? null : prev))}
           style={{ width: '100%', height: '100%' }}
           mapStyle={MAP_STYLE}
+          onLoad={() => setIsMapLoaded(true)}
           minZoom={3}
           maxZoom={18}
         >
