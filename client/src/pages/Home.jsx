@@ -279,8 +279,7 @@ export default function Home() {
         {showIntro ? (
           <div className="w-full h-full flex flex-col items-center justify-center">
             <div className="bg-transparent flex items-center gap-3.5">
-              <motion.img
-                layoutId="logo-img"
+              <img
                 src="/localwatch-icon.png"
                 alt="LocalWatch Logo"
                 className="w-16 h-16 md:w-20 md:h-20 rounded-2xl shadow-xl"
@@ -307,15 +306,17 @@ export default function Home() {
           <div className="w-full p-3 md:p-5 flex items-start justify-between gap-3 pointer-events-none">
             {/* Left: Project Title (Noticeably Larger Identity) & Search Button directly below */}
             <div className="flex flex-col items-start gap-2.5">
-              <div
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
                 className="px-4 py-2 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_16px_rgba(15,23,42,0.08)] pointer-events-auto flex items-center gap-3 cursor-pointer hover:bg-white transition-all group"
                 onClick={() => setViewState((prev) => ({ ...prev, zoom: 14 }))}
               >
-                <motion.img
-                  layoutId="logo-img"
+                <img
                   src="/localwatch-icon.png"
                   alt="LocalWatch Logo"
-                  className="w-9 h-9 rounded-xl shadow-sm object-cover group-hover:scale-105 transition-transform"
+                  className="w-9 h-9 rounded-xl shadow-sm object-cover"
                 />
                 <div className="flex flex-col">
                   <motion.h1
@@ -325,16 +326,11 @@ export default function Home() {
                     <span className="text-slate-950">Local</span>
                     <span className="text-[#00b87c]">Watch</span>
                   </motion.h1>
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5, duration: 0.4 }}
-                    className="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5"
-                  >
+                  <span className="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5">
                     Know what's wrong nearby.
-                  </motion.span>
+                  </span>
                 </div>
-              </div>
+              </motion.div>
 
               {/* 1. Search Button (Unified styling) */}
               <motion.button
