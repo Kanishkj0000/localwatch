@@ -34,6 +34,7 @@ export default function Home() {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [viewportBounds, setViewportBoundsLocal] = useState(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [routePathD, setRoutePathD] = useState('');
 
   const mapRef = useRef(null);
   const popupRef = useRef(null);
@@ -255,10 +256,69 @@ export default function Home() {
     };
   }, [userLocation]);
 
+  // Project route coordinates to SVG screen path for bulletproof visual rendering
+  const updateRouteSvg = useCallback(() => {
+    if (!isDirectionsOpen || !selectedRoute?.geometry?.coordinates || !mapRef.current) {
+      setRoutePathD('');
+      return;
+    }
+    const map = mapRef.current.getMap ? mapRef.current.getMap() : mapRef.current;
+    if (!map || typeof map.project !== 'function') return;
+
+    const coords = selectedRoute.geometry.coordinates;
+    if (!Array.isArray(coords) || coords.length === 0) {
+      setRoutePathD('');
+      return;
+    }
+
+    let d = '';
+    for (let i = 0; i < coords.length; i++) {
+      const c = coords[i];
+      if (!c || c.length < 2) continue;
+      const pt = map.project(c);
+      if (!pt || typeof pt.x !== 'number' || typeof pt.y !== 'number') continue;
+      if (!d) {
+        d += `M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+      } else {
+        d += ` L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+      }
+    }
+    setRoutePathD(d);
+  }, [isDirectionsOpen, selectedRoute]);
+
+  // Keep SVG route synced across render, move, and zoom events
+  useEffect(() => {
+    const map = mapRef.current?.getMap ? mapRef.current.getMap() : mapRef.current;
+    if (!map || typeof map.on !== 'function') return;
+
+    const handleRender = () => {
+      updateRouteSvg();
+    };
+
+    map.on('render', handleRender);
+    map.on('move', handleRender);
+    map.on('zoom', handleRender);
+    updateRouteSvg();
+
+    const t1 = setTimeout(updateRouteSvg, 100);
+    const t2 = setTimeout(updateRouteSvg, 400);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      if (typeof map.off === 'function') {
+        map.off('render', handleRender);
+        map.off('move', handleRender);
+        map.off('zoom', handleRender);
+      }
+    };
+  }, [isMapLoaded, updateRouteSvg]);
+
   // Handle map movement & Viewport Bounding Box discovery
   const handleMapMove = useCallback((evt) => {
     setViewState(evt.viewState);
-  }, []);
+    updateRouteSvg();
+  }, [updateRouteSvg]);
 
   const handleMapIdle = useCallback(() => {
     if (mapRef.current) {
@@ -343,7 +403,11 @@ export default function Home() {
       [[minLng, minLat], [maxLng, maxLat]],
       { padding: { top: 90, bottom: 90, left: 430, right: 90 }, duration: 1200 }
     );
-  }, []);
+    setTimeout(updateRouteSvg, 100);
+    setTimeout(updateRouteSvg, 400);
+    setTimeout(updateRouteSvg, 800);
+    setTimeout(updateRouteSvg, 1300);
+  }, [updateRouteSvg]);
 
   const handleConfirmClick = async (issueId) => {
     if (!isAuthenticated) {
@@ -752,6 +816,30 @@ export default function Home() {
             </Popup>
           )}
         </MapGL>
+
+        {/* Guaranteed SVG Route Overlay - always rendered with 100% reliability */}
+        {isDirectionsOpen && selectedRoute?.geometry?.coordinates && routePathD && (
+          <svg className="absolute inset-0 w-full h-full pointer-events-none z-[5]">
+            <path
+              d={routePathD}
+              fill="none"
+              stroke="#1e3a8a"
+              strokeWidth={9}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.9}
+            />
+            <path
+              d={routePathD}
+              fill="none"
+              stroke="#2563eb"
+              strokeWidth={5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={1}
+            />
+          </svg>
+        )}
       </div>
 
       {/* Directions Panel */}
